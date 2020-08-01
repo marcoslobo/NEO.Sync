@@ -1,0 +1,16 @@
+﻿{
+  "Settings": {
+    "rpcUrl": "http://seed1.ngd.network:10332",
+    "defaultAccount": "ASJiT56jYKZgTN9FtGvjRenbdBKTZ98QVw",
+    "debugLogLocation": "C:\\Users\\bruno\\Documents\\Source\\Repos\\NeoDraftRpc\\log.txt",
+    "blockhash": "b9cbaccefd80b08576e06e76122294b71bad73098d49233164b610a323119e82",
+    "blockNumber": "0",
+    "contractHash": "a2df2e12d76bcf4580ca3178d3790b697eece053",
+    "contractTransaction": "aeefafca2b27bbec34a698c4ef498993e923bba1d12eb5a9adad50900a7a3f03",
+    "minerTransaction": "ed0ebd8c10264ac2ed128146b21c382ffb565ec7a4e2d70c605d809f4e371950",
+    "claimTransaction": "b0ecd5924796f580b57ebda101f7059ee1551b5ba92cf73ef910e813149cab72",
+    "governingAssetHash": "c56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b",
+    "utilityAssetHash": "602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7",
+    "tokenAssetHash": "7a52ff333efff6d57c6d08382f706184509a594f2c00ba659d626d3cde3ea2e0"
+  }
+}
