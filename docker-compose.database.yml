@@ -1,0 +1,22 @@
+version: "3.1"
+
+volumes:
+  postgres-data: {}
+
+services:
+  evolua-db:
+    container_name: evolua-db
+    restart: always
+    image: postgres:11-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: evolua
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - evolua-network  
+networks:
+  evolua-network:
+    driver: bridge
