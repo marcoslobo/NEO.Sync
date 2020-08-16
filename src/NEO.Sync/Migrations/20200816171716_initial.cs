@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
-namespace NEO.Api.Worker.Migrations
+namespace NEO.Sync.Migrations
 {
     public partial class initial : Migration
     {
@@ -40,7 +40,7 @@ namespace NEO.Api.Worker.Migrations
                 {
                     id = table.Column<long>(nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    address = table.Column<string>(maxLength: 34, nullable: true)
+                    address = table.Column<string>(maxLength: 36, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -92,9 +92,7 @@ namespace NEO.Api.Worker.Migrations
                     symbol = table.Column<string>(maxLength: 255, nullable: true),
                     type = table.Column<string>(maxLength: 255, nullable: false),
                     issued = table.Column<decimal>(type: "numeric", nullable: true),
-                    block_time = table.Column<DateTime>(nullable: false),
-                    inserted_at = table.Column<DateTime>(nullable: false),
-                    updated_at = table.Column<DateTime>(nullable: false)
+                    inserted_at = table.Column<DateTime>(nullable: false)
                 },
                 constraints: table =>
                 {
@@ -117,7 +115,8 @@ namespace NEO.Api.Worker.Migrations
                 name: "transfers",
                 columns: table => new
                 {
-                    id = table.Column<long>(nullable: false),
+                    id = table.Column<long>(nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     address_from_id = table.Column<long>(nullable: false),
                     address_to_id = table.Column<long>(nullable: false),
                     amount = table.Column<decimal>(type: "numeric", nullable: false),
@@ -125,7 +124,8 @@ namespace NEO.Api.Worker.Migrations
                     block_time = table.Column<DateTime>(nullable: false),
                     inserted_at = table.Column<DateTime>(nullable: false),
                     updated_at = table.Column<DateTime>(nullable: false),
-                    asset_id = table.Column<long>(nullable: false)
+                    asset_id = table.Column<long>(nullable: false),
+                    transaction_id = table.Column<long>(nullable: false)
                 },
                 constraints: table =>
                 {
@@ -146,6 +146,12 @@ namespace NEO.Api.Worker.Migrations
                         name: "fk_transfers_assets_asset_id",
                         column: x => x.asset_id,
                         principalTable: "assets",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "fk_transfers_transactions_transaction_id",
+                        column: x => x.transaction_id,
+                        principalTable: "transactions",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -197,6 +203,11 @@ namespace NEO.Api.Worker.Migrations
                 column: "asset_id");
 
             migrationBuilder.CreateIndex(
+                name: "ix_transfers_transaction_id",
+                table: "transfers",
+                column: "transaction_id");
+
+            migrationBuilder.CreateIndex(
                 name: "index_wallets_address",
                 table: "wallets",
                 column: "address");
@@ -205,19 +216,19 @@ namespace NEO.Api.Worker.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "transactions");
-
-            migrationBuilder.DropTable(
                 name: "transfers");
-
-            migrationBuilder.DropTable(
-                name: "blocks");
 
             migrationBuilder.DropTable(
                 name: "assets");
 
             migrationBuilder.DropTable(
+                name: "transactions");
+
+            migrationBuilder.DropTable(
                 name: "wallets");
+
+            migrationBuilder.DropTable(
+                name: "blocks");
         }
     }
 }

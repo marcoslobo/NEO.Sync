@@ -1,11 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 
-namespace EvoLua.Blockchain.Models
+namespace NEO.Api.Models
 {
     public partial class Assets
     {
- 
+
         public long Id { get; set; }
         public long? TransactionId { get; set; }
         public string Hash { get; set; }
@@ -18,10 +17,8 @@ namespace EvoLua.Blockchain.Models
         public int Precision { get; set; }
         public string Symbol { get; set; }
         public string Type { get; set; }
-        public decimal? Issued { get; set; }
-        public DateTime BlockTime { get; set; }        
-        public DateTime InsertedAt { get; set; }
-        public DateTime UpdatedAt { get; set; }
+        public decimal? Issued { get; set; }        
+        public DateTime InsertedAt { get; set; }        
 
     }
 }

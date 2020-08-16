@@ -1,11 +1,10 @@
-using NEO.Api.Data;
-using NEO.Api.Models;
-using EvoLua.Blockchain.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Neo;
 using Neo.SmartContract;
+using NEO.Api.Data;
+using NEO.Api.Models;
 using NeoModules.RPC.DTOs;
 using NeoModules.RPC.Services.Asset;
 using NeoModules.RPC.Services.Block;
@@ -22,7 +21,7 @@ namespace NEO.Api.Worker
     public class SyncWorker : BackgroundService
     {
         private readonly ILogger<SyncWorker> _logger;
-        private readonly EvoLuaContext context;
+        private readonly NeoContext context;
         private readonly NeoGetBlockCount getBlockCount;
         private readonly NeoGetBlock getBlock;
         private readonly NeoGetRawTransaction getTransaction;
@@ -31,7 +30,7 @@ namespace NEO.Api.Worker
         public SyncWorker(ILogger<SyncWorker> logger, IConfiguration iconfiguration)
         {
             _logger = logger;
-            context = new EvoLuaContext(iconfiguration);
+            context = new NeoContext(iconfiguration);
 
             var settings = new Settings();
             var client = ClientFactory.GetClient(settings);
@@ -42,69 +41,85 @@ namespace NEO.Api.Worker
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-        { 
+        {
+            _logger.LogInformation("Let's Sync NEO Blockchain!");
+
             while (!stoppingToken.IsCancellationRequested)
             {
-                long iCount = 10000;
-
-                //var lastBlock = context.Blocks.OrderByDescending(a => a.Index).FirstOrDefault();
-                //if (lastBlock != null)
-                //    iCount = lastBlock.Index + 1;
-
-                //var blockNumber = await getBlockCount.SendRequestAsync();                
-
-                while (iCount != 100000)
+                try
                 {
-                    using (var transaction = context.Database.BeginTransaction())
-                    {
-                        try
-                        {
-                            //var block = await getBlock.SendRequestAsync(5908400);
-                            var block = await getBlock.SendRequestAsync((int)iCount);
+                    _logger.LogInformation("Worker starting at: {time}", DateTimeOffset.Now);
 
-                            //TODO: criar extensão para remover os replace 0x
+                    await SyncTask();
 
-                            var blocks = new Blocks()
-                            {
-                                Hash = UInt256.Parse(block.Hash).ToString().Remove0x(),
-                                MerkleRoot = UInt256.Parse(block.Merkleroot).ToString().Remove0x(),
-                                Index = block.Index,
-                                NextConsensus = block.NextConsensus.ToInteropMethodHash().ToString().Remove0x(),
-                                Nonce = Convert.ToUInt64(block.Nonce, 16).ToString().Remove0x(),
-                                Script = JsonConvert.SerializeObject(block.Script),
-                                Time = new DateTime(block.Time),
-                                Size = block.Size
-                            };
+                    await Task.Delay(1000, stoppingToken);
 
-                            context.Add(blocks);
-                            await context.SaveChangesAsync();
-
-
-                            //Tratar transações\\
-                            foreach (var transactionDto in block.Transactions)
-                            {
-                                var transactionId = await SaveTransaction(transactionDto, blocks);
-
-                                if (transactionDto.Type.ToLower() == "contracttransaction")
-                                {
-                                    await SaveTransfer(transactionDto, block, transactionId);
-                                }
-                            }
-
-                            await transaction.CommitAsync();
-
-                        }
-                        catch (Exception ex)
-                        {
-                            await transaction.RollbackAsync();
-                            _logger.LogInformation("Worker error at: {time} - error: {errorMessage}", DateTimeOffset.Now, ex.Message);
-                        }
-                    }
-                    iCount += 1;
                 }
+                catch (Exception ex)
+                {
+                    _logger.LogCritical(ex, "Error at: {time}", DateTimeOffset.Now);                    
+                }
+            }
+        }
 
-                _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
-                await Task.Delay(1000, stoppingToken);
+        private async Task SyncTask()
+        {
+            long iCount = 0;
+
+            var lastBlock = context.Blocks.OrderByDescending(a => a.Index).FirstOrDefault();
+            if (lastBlock != null)
+                iCount = lastBlock.Index + 1;
+
+            var blockNumber = await getBlockCount.SendRequestAsync();
+
+            while (iCount != blockNumber)
+            {
+                using (var transaction = context.Database.BeginTransaction())
+                {
+                    try
+                    {
+                        //var block = await getBlock.SendRequestAsync(5908400);
+                        var block = await getBlock.SendRequestAsync((int)iCount);
+
+                        //TODO: criar extensão para remover os replace 0x
+
+                        var blocks = new Blocks()
+                        {
+                            Hash = UInt256.Parse(block.Hash).ToString().Remove0x(),
+                            MerkleRoot = UInt256.Parse(block.Merkleroot).ToString().Remove0x(),
+                            Index = block.Index,
+                            NextConsensus = block.NextConsensus.ToInteropMethodHash().ToString().Remove0x(),
+                            Nonce = Convert.ToUInt64(block.Nonce, 16).ToString().Remove0x(),
+                            Script = JsonConvert.SerializeObject(block.Script),
+                            Time = new DateTime(block.Time),
+                            Size = block.Size
+                        };
+
+                        context.Add(blocks);
+                        await context.SaveChangesAsync();
+
+
+                        //Tratar transações\\
+                        foreach (var transactionDto in block.Transactions)
+                        {
+                            var transactionId = await SaveTransaction(transactionDto, blocks);
+
+                            if (transactionDto.Type.ToLower() == "contracttransaction")
+                            {
+                                await SaveTransfer(transactionDto, block, transactionId);
+                            }
+                        }
+
+                        await transaction.CommitAsync();
+
+                    }
+                    catch (Exception ex)
+                    {
+                        await transaction.RollbackAsync();
+                        _logger.LogInformation("Worker error at: {time} - error: {errorMessage}", DateTimeOffset.Now, ex.Message);
+                    }
+                }
+                iCount += 1;
             }
         }
 
@@ -190,7 +205,7 @@ namespace NEO.Api.Worker
                             transfer.Amount = decimal.Parse(vOut.Value);
                             transfer.BlockIndex = block.Index;
                             transfer.InsertedAt = new DateTime(block.Time);
-                            transfer.Id = transactionId;
+                            transfer.TransactionId = transactionId;
 
                             var asset = await AssetGetOrAdd(vOut.Asset);
                             transfer.Asset = asset ?? throw new Exception($"Asset {vOut.Asset} not found!");
