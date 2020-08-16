@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 
-namespace EvoLua.Blockchain.Models
+namespace NEO.Api.Models
 {
     public class Wallet
     {

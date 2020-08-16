@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace EvoLua.Blockchain.Models
+namespace NEO.Api.Models
 {
     public partial class Transfers
     {
@@ -16,5 +16,7 @@ namespace EvoLua.Blockchain.Models
         public DateTime UpdatedAt { get; set; }
         public Assets Asset { get; set; }
         public long AssetId { get; set; }
+        public Transactions Transaction { get; set; }
+        public long TransactionId { get; set; }
     }
 }

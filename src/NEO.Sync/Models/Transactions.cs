@@ -5,6 +5,10 @@ namespace NEO.Api.Models
 {
     public partial class Transactions
     {
+        public Transactions()
+        {
+            Transfers = new List<Transfers>();
+        }
         public long Id { get; set; }        
         public string Hash { get; set; }        
         public Blocks Block { get; set; }
@@ -18,6 +22,8 @@ namespace NEO.Api.Models
         public int N { get; set; }
         public DateTime InsertedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+        public List<Transfers> Transfers { get; set; }
+
 
         internal void BindBlock(Blocks block)
         {
